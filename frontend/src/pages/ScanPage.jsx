@@ -1,0 +1,105 @@
+import { CheckCircle2, Clock3, RefreshCcw, ShieldAlert } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { Button } from '../components/ui/Button';
+import { Card, CardBody, CardHeader } from '../components/ui/Card';
+import { Badge } from '../components/ui/Badge';
+import { PageHeader } from './PageHeader';
+import { api, hasApiSession } from '../services/api';
+
+export function ScanPage() {
+  const { projectId } = useParams();
+  const [scan, setScan] = useState(null);
+  const [error, setError] = useState('');
+  const [starting, setStarting] = useState(false);
+
+  useEffect(() => {
+    if (!hasApiSession() || !projectId || projectId.length < 20) return;
+    api.listScans(projectId).then((scans) => setScan(scans[0] || null)).catch((err) => setError(err.message));
+  }, [projectId]);
+
+  async function handleScan() {
+    setStarting(true);
+    setError('');
+    try {
+      const result = await api.startScan(projectId);
+      setScan(result.scan);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  const progress = scan?.progress ? Object.entries(scan.progress).filter(([name]) => name !== 'repository').map(([name, status]) => ({ name, status, progress: status === 'done' ? 100 : status === 'running' ? 50 : 0 })) : [];
+  const scanGroups = progress.length ? progress : [
+    { name: 'codeQuality', progress: 0, status: 'pending' },
+    { name: 'security', progress: 0, status: 'pending' },
+    { name: 'dependencies', progress: 0, status: 'pending' },
+    { name: 'performance', progress: 0, status: 'pending' },
+    { name: 'architecture', progress: 0, status: 'pending' },
+  ];
+
+  return (
+    <div>
+      <PageHeader
+        eyebrow="Repository scan"
+        title="Scan status"
+        description="Live repository check with static analysis, dependency review, and security findings."
+        actions={<Button variant="secondary" size="sm" icon={<RefreshCcw size={13} />} onClick={handleScan} disabled={starting}>{starting ? 'Scanning...' : 'Rescan'}</Button>}
+      />
+
+      {error && <div className="mb-6 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
+      {!hasApiSession() && <div className="mb-6 rounded-md border border-border bg-surface px-3 py-2 text-[12px] text-text-secondary">Demo Mode is showing sample scan data. Sign in and open a connected project to run a repository scan.</div>}
+
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card>
+          <CardHeader title="Scanner pipeline" description="Current check execution" />
+          <CardBody className="space-y-4">
+            {scanGroups.map(({ name, progress: percentage, status }) => (
+              <div key={name}>
+                <div className="mb-1 flex items-center justify-between text-[12px] text-text-secondary">
+                  <span>{name.replace(/([A-Z])/g, ' $1')}</span>
+                  <span>{percentage}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-surface-hover">
+                  <div className="h-2 rounded-full bg-accent" style={{ width: `${percentage}%` }} />
+                </div>
+                <div className="mt-2 flex items-center justify-between text-[11.5px]">
+                  <span className="text-text-secondary">{status}</span>
+                  {status === 'completed' ? <CheckCircle2 size={14} className="text-success" /> : <Clock3 size={14} className="text-warning" />}
+                </div>
+              </div>
+            ))}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Scan summary" description="Current results" />
+          <CardBody className="space-y-3">
+            <div className="rounded-md border border-border bg-background p-3">
+              <p className="text-[12px] text-text-secondary">Health score</p>
+              <p className="mt-2 text-[28px] font-semibold text-text-primary">{scan?.healthScore ?? '—'}</p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="rounded-md border border-border bg-background p-3">
+                <p className="text-[12px] text-text-secondary">Issues</p>
+                <p className="mt-2 text-[18px] font-semibold text-text-primary">{scan?.issueCounts?.total ?? '—'}</p>
+              </div>
+              <div className="rounded-md border border-border bg-background p-3">
+                <p className="text-[12px] text-text-secondary">Resolved</p>
+                <p className="mt-2 text-[18px] font-semibold text-success">{scan ? '0' : '—'}</p>
+              </div>
+            </div>
+            <div className="rounded-md border border-border bg-background p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] text-text-secondary">Critical findings</span>
+                <Badge variant="danger">{scan?.issueCounts?.critical ?? '—'}</Badge>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+    </div>
+  );
+}

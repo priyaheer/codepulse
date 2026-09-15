@@ -1,0 +1,21 @@
+import { AppError } from '../middleware/errorHandler.js';
+import { listUserRepos as githubListUserRepos, getRepo as githubGetRepo } from '../services/githubService.js';
+
+export async function listUserRepos(req, res, next) {
+  try {
+    const repos = await githubListUserRepos(req.user._id);
+    res.json({ data: repos });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getRepoDetails(req, res, next) {
+  try {
+    const { owner, repo } = req.params;
+    const details = await githubGetRepo(req.user._id, owner, repo);
+    res.json({ data: details });
+  } catch (err) {
+    next(err);
+  }
+}

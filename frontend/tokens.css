@@ -1,0 +1,129 @@
+/* ============================================================
+   CodePulse AI — Design Tokens
+   Dark-first, technical, diagnostic-monitor inspired palette.
+   Green is reserved for "healthy" signal; blue is the sole
+   interactive accent; severity colors carry meaning only.
+   ============================================================ */
+
+:root,
+[data-theme='dark'] {
+  --cp-background: #0a0d12;
+  --cp-background-elevated: #0d1117;
+  --cp-surface: #12161f;
+  --cp-surface-hover: #171c27;
+  --cp-surface-active: #1c2230;
+  --cp-border: #212734;
+  --cp-border-strong: #2c3444;
+
+  --cp-text-primary: #e9ecf2;
+  --cp-text-secondary: #9aa3b7;
+  --cp-text-muted: #5e6577;
+
+  --cp-accent: #4c8bf5;
+  --cp-accent-hover: #6b9ffb;
+  --cp-accent-muted: #1c2c47;
+  --cp-accent-text: #bcd4ff;
+
+  --cp-pulse: #34d399;
+  --cp-pulse-muted: #12271f;
+
+  --cp-success: #34d399;
+  --cp-success-muted: #12271f;
+  --cp-warning: #f2b84b;
+  --cp-warning-muted: #2c2313;
+  --cp-danger: #f0605a;
+  --cp-danger-muted: #2c1616;
+  --cp-info: #4c8bf5;
+  --cp-info-muted: #1c2c47;
+
+  --cp-critical: #f0605a;
+  --cp-high: #f2884b;
+  --cp-medium: #f2b84b;
+  --cp-low: #6b93c4;
+  --cp-resolved: #34d399;
+
+  --cp-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --cp-shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --cp-focus-ring: #4c8bf5;
+}
+
+[data-theme='light'] {
+  --cp-background: #f6f7f9;
+  --cp-background-elevated: #ffffff;
+  --cp-surface: #ffffff;
+  --cp-surface-hover: #f0f2f5;
+  --cp-surface-active: #e7eaef;
+  --cp-border: #e1e4ea;
+  --cp-border-strong: #cdd2db;
+
+  --cp-text-primary: #12151c;
+  --cp-text-secondary: #4d5566;
+  --cp-text-muted: #8891a3;
+
+  --cp-accent: #2f6fe0;
+  --cp-accent-hover: #1f5cc7;
+  --cp-accent-muted: #e6eefc;
+  --cp-accent-text: #1f5cc7;
+
+  --cp-pulse: #199866;
+  --cp-pulse-muted: #e5f6ee;
+
+  --cp-success: #199866;
+  --cp-success-muted: #e5f6ee;
+  --cp-warning: #b3790c;
+  --cp-warning-muted: #fbf0dc;
+  --cp-danger: #d0433d;
+  --cp-danger-muted: #fbe7e6;
+  --cp-info: #2f6fe0;
+  --cp-info-muted: #e6eefc;
+
+  --cp-critical: #d0433d;
+  --cp-high: #c4671f;
+  --cp-medium: #b3790c;
+  --cp-low: #4d70a0;
+  --cp-resolved: #199866;
+
+  --cp-shadow-soft: 0 1px 2px rgba(20, 24, 33, 0.06);
+  --cp-shadow-medium: 0 8px 24px rgba(20, 24, 33, 0.08);
+  --cp-focus-ring: #2f6fe0;
+}
+
+@theme inline {
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --color-background: var(--cp-background);
+  --color-background-elevated: var(--cp-background-elevated);
+  --color-surface: var(--cp-surface);
+  --color-surface-hover: var(--cp-surface-hover);
+  --color-surface-active: var(--cp-surface-active);
+  --color-border: var(--cp-border);
+  --color-border-strong: var(--cp-border-strong);
+
+  --color-text-primary: var(--cp-text-primary);
+  --color-text-secondary: var(--cp-text-secondary);
+  --color-text-muted: var(--cp-text-muted);
+
+  --color-accent: var(--cp-accent);
+  --color-accent-hover: var(--cp-accent-hover);
+  --color-accent-muted: var(--cp-accent-muted);
+  --color-accent-text: var(--cp-accent-text);
+
+  --color-pulse: var(--cp-pulse);
+  --color-pulse-muted: var(--cp-pulse-muted);
+
+  --color-success: var(--cp-success);
+  --color-success-muted: var(--cp-success-muted);
+  --color-warning: var(--cp-warning);
+  --color-warning-muted: var(--cp-warning-muted);
+  --color-danger: var(--cp-danger);
+  --color-danger-muted: var(--cp-danger-muted);
+  --color-info: var(--cp-info);
+  --color-info-muted: var(--cp-info-muted);
+
+  --color-critical: var(--cp-critical);
+  --color-high: var(--cp-high);
+  --color-medium: var(--cp-medium);
+  --color-low: var(--cp-low);
+  --color-resolved: var(--cp-resolved);
+}
