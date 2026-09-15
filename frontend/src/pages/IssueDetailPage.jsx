@@ -1,14 +1,42 @@
 import { ArrowRight, Copy, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Badge, SeverityBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { demoIssues } from '../services/demoData';
+import { api } from '../services/api';
 import { PageHeader } from './PageHeader';
 
 export function IssueDetailPage() {
   const { issueId } = useParams();
-  const issue = demoIssues.find((item) => item.id === issueId) || demoIssues[0];
+  const [issue, setIssue] = useState(demoIssues.find((item) => item.id === issueId) || demoIssues[0]);
+  const [aiResult, setAiResult] = useState(null);
+  const [loading, setLoading] = useState('');
+  const [error, setError] = useState('');
+  const liveIssue = /^[a-f\d]{24}$/i.test(issueId || '');
+
+  useEffect(() => {
+    if (!liveIssue) return;
+    api.getMe().then(() => api.getIssue(issueId)).then((result) => setIssue(result)).catch(() => {});
+  }, [issueId, liveIssue]);
+
+  async function runAI(action) {
+    if (!liveIssue) {
+      setError('Sign in with a connected project to use repository-grounded AI.');
+      return;
+    }
+    setLoading(action);
+    setError('');
+    try {
+      const result = action === 'analyze' ? await api.analyzeIssue(issueId) : await api.suggestIssueFix(issueId);
+      setAiResult(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading('');
+    }
+  }
 
   return (
     <div>
@@ -18,11 +46,13 @@ export function IssueDetailPage() {
         description="Evidence-based note from the scanner, AI context, and recommended fix path."
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" icon={<Sparkles size={13} />}>Suggest fix</Button>
+            <Button variant="secondary" size="sm" icon={<Sparkles size={13} />} onClick={() => runAI('fix')} disabled={loading !== ''}>{loading === 'fix' ? 'Working...' : 'Suggest fix'}</Button>
             <Button variant="ghost" size="sm" icon={<Copy size={13} />}>Copy fix</Button>
           </div>
         }
       />
+
+      {error && <div className="mb-6 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
@@ -61,16 +91,23 @@ export function IssueDetailPage() {
         <Card>
           <CardHeader title="AI analysis" description="Structured guidance" />
           <CardBody className="space-y-4">
+            <Button variant="primary" size="sm" icon={<Sparkles size={13} />} onClick={() => runAI('analyze')} disabled={loading !== ''}>{loading === 'analyze' ? 'Analyzing...' : 'Analyze with AI'}</Button>
             <div className="rounded-md border border-border bg-background p-3">
               <p className="text-[11.5px] text-text-secondary">Summary</p>
-              <p className="mt-2 text-[13px] leading-relaxed text-text-primary">Unvalidated request data is allowed to enter the payment pipeline. This creates an elevated risk of malformed requests, misuse, or downstream failures.</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-text-primary">{aiResult?.summary || (liveIssue ? 'Run analysis to generate an evidence-based explanation.' : 'Demo Mode preview. Connect a repository to generate a real analysis.')}</p>
             </div>
+            {aiResult && <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-md border border-border bg-background p-3"><p className="text-[11.5px] text-text-secondary">Why it matters</p><p className="mt-2 text-[13px] text-text-primary">{aiResult.whyItMatters}</p></div>
+                <div className="rounded-md border border-border bg-background p-3"><p className="text-[11.5px] text-text-secondary">Impact / confidence</p><p className="mt-2 text-[13px] text-text-primary">{aiResult.impact} / {Math.round(aiResult.confidence * 100)}%</p></div>
+              </div>
+              <div className="rounded-md border border-border bg-background p-3"><p className="text-[11.5px] text-text-secondary">Recommendation</p><p className="mt-2 text-[13px] text-text-primary">{aiResult.recommendation}</p></div>
+            </>}
             <div className="rounded-md border border-border bg-background p-3">
               <p className="text-[11.5px] text-text-secondary">Suggested code</p>
-              <pre className="mt-2 overflow-auto rounded-md bg-surface p-3 text-[12px] whitespace-pre-wrap text-text-primary">{
-  'const payload = {\n  amount: Number(form.amount),\n  customerId: String(form.customerId),\n};\n\nif (!Number.isFinite(payload.amount) || payload.amount <= 0) {\n  throw new Error("Invalid amount");\n}'
-}</pre>
+              <pre className="mt-2 overflow-auto rounded-md bg-surface p-3 text-[12px] whitespace-pre-wrap text-text-primary">{aiResult?.suggestedCode || 'No AI-generated code yet.'}</pre>
             </div>
+            {aiResult?.diff && <div className="rounded-md border border-border bg-background p-3"><p className="text-[11.5px] text-text-secondary">Review-only diff</p><pre className="mt-2 overflow-auto rounded-md bg-surface p-3 text-[12px] whitespace-pre-wrap text-text-primary">{aiResult.diff}</pre></div>}
             <div className="flex items-center gap-2">
               <Button variant="primary" size="sm" icon={<CheckCircle2 size={13} />}>Mark resolved</Button>
               <Button variant="secondary" size="sm">Ignore</Button>

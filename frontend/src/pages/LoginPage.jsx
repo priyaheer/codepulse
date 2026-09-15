@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Github, ShieldCheck, Lock, Eye } from 'lucide-react';
 import { Logo } from '../components/ui/Logo';
 import { Button } from '../components/ui/Button';
+import { api } from '../services/api';
 
 const points = [
   { icon: Eye, text: 'We only read repository metadata and source files needed to scan.' },
@@ -26,7 +27,7 @@ export function LoginPage() {
               Repository access is required to analyze your code.
             </p>
 
-            <Button variant="secondary" size="lg" className="w-full mt-6" icon={<Github size={17} />}>
+            <Button as="a" href={api.githubLoginUrl} variant="secondary" size="lg" className="w-full mt-6" icon={<Github size={17} />}>
               Continue with GitHub
             </Button>
 

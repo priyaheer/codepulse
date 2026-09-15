@@ -4,17 +4,17 @@ import { Badge, SeverityBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { demoIssues } from '../services/demoData';
-import { api, hasApiSession } from '../services/api';
+import { api } from '../services/api';
 import { PageHeader } from './PageHeader';
 
 export function IssuesPage() {
-  const [issues, setIssues] = useState(demoIssues);
+  const [issues, setIssues] = useState([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const projectId = localStorage.getItem('codepulse_active_project');
-    if (!hasApiSession() || !projectId) return;
-    api.listIssues(projectId).then(setIssues).catch((err) => setError(err.message));
+    if (!projectId) return;
+    api.getMe().then(() => api.listIssues(projectId)).then(setIssues).catch(() => {});
   }, []);
 
   const counts = issues.reduce((result, issue) => {
@@ -69,6 +69,7 @@ export function IssuesPage() {
               </tr>
             </thead>
             <tbody>
+              {issues.length === 0 && <tr><td colSpan="7" className="px-3 py-8 text-center text-text-secondary">No real scan issues are available yet.</td></tr>}
               {issues.map((issue) => (
                 <tr key={issue.id} className="rounded-md bg-background align-top">
                   <td className="rounded-l-md border border-r-0 border-border px-3 py-2.5"><SeverityBadge severity={issue.severity} /></td>

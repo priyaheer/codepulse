@@ -1,20 +1,29 @@
 import { Activity, ArrowUpRight, Github, Server, Languages, Clock3 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
-import { demoProjects } from '../services/demoData';
+import { api } from '../services/api';
 
 export function ProjectOverviewPage() {
   const { projectId } = useParams();
-  const project = demoProjects.find((p) => p.id === projectId) || demoProjects[0];
+  const [project, setProject] = useState(null);
+  const [scan, setScan] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.getProject(projectId).then(async (result) => { setProject(result); const scans = await api.listScans(projectId); setScan(scans[0] || null); }).catch((err) => setError(err.message));
+  }, [projectId]);
+
+  if (!project) return <div><p className="text-[13px] text-danger">{error || 'Loading project...'}</p></div>;
 
   const stats = [
-    { label: 'Health score', value: `${project.healthScore}`, icon: Activity },
+    { label: 'Health score', value: `${project.latestHealthScore ?? '—'}`, icon: Activity },
     { label: 'Language', value: project.language, icon: Languages },
     { label: 'Stars', value: `${project.stars}`, icon: Github },
-    { label: 'Visibility', value: project.visibility, icon: Server },
-    { label: 'Last scan', value: project.lastScan, icon: Clock3 },
+    { label: 'Visibility', value: project.isPrivate ? 'Private' : 'Public', icon: Server },
+    { label: 'Last scan', value: project.lastScannedAt ? new Date(project.lastScannedAt).toLocaleString() : 'Never', icon: Clock3 },
   ];
 
   return (
@@ -25,8 +34,8 @@ export function ProjectOverviewPage() {
           <h1 className="text-[20px] font-semibold text-text-primary tracking-tight">{project.name}</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="success">{project.status}</Badge>
-          <Button as={Link} to={`/app/projects/${project.id}/scan`} variant="secondary" size="sm" iconRight={<ArrowUpRight size={13} />}>Scan now</Button>
+          <Badge variant={project.latestScanId ? 'success' : 'neutral'}>{project.latestScanId ? 'Scanned' : 'Not scanned'}</Badge>
+          <Button as={Link} to={`/app/projects/${project._id}/scan`} variant="secondary" size="sm" iconRight={<ArrowUpRight size={13} />}>Scan now</Button>
         </div>
       </div>
 
@@ -48,15 +57,15 @@ export function ProjectOverviewPage() {
           <CardBody className="space-y-4">
             <div className="flex items-center justify-between rounded-md border border-border bg-background p-3">
               <span className="text-[13px] text-text-secondary">Critical</span>
-              <span className="text-[15px] font-semibold text-critical">2</span>
+              <span className="text-[15px] font-semibold text-critical">{scan?.issueCounts?.critical ?? '—'}</span>
             </div>
             <div className="flex items-center justify-between rounded-md border border-border bg-background p-3">
               <span className="text-[13px] text-text-secondary">High</span>
-              <span className="text-[15px] font-semibold text-high">4</span>
+              <span className="text-[15px] font-semibold text-high">{scan?.issueCounts?.high ?? '—'}</span>
             </div>
             <div className="flex items-center justify-between rounded-md border border-border bg-background p-3">
               <span className="text-[13px] text-text-secondary">Medium</span>
-              <span className="text-[15px] font-semibold text-medium">6</span>
+              <span className="text-[15px] font-semibold text-medium">{scan?.issueCounts?.medium ?? '—'}</span>
             </div>
           </CardBody>
         </Card>
@@ -65,18 +74,18 @@ export function ProjectOverviewPage() {
           <CardHeader title="Analysis coverage" description="Most recent scan depth" />
           <CardBody className="space-y-4">
             {[
-              ['Security', '87%', 'text-success'],
-              ['Dependencies', '68%', 'text-warning'],
-              ['Performance', '76%', 'text-accent'],
-              ['Architecture', '82%', 'text-resolved'],
+              ['Security', scan?.scores?.security, 'text-success'],
+              ['Dependencies', scan?.scores?.dependencies, 'text-warning'],
+              ['Performance', scan?.scores?.performance, 'text-accent'],
+              ['Architecture', scan?.architectureSummary ? 'Detected' : null, 'text-resolved'],
             ].map(([label, value, className]) => (
               <div key={label}>
                 <div className="mb-1 flex items-center justify-between text-[12px] text-text-secondary">
                   <span>{label}</span>
-                  <span className={className}>{value}</span>
+                  <span className={className}>{value == null ? '—' : typeof value === 'number' ? `${value}%` : value}</span>
                 </div>
                 <div className="h-2 rounded-full bg-surface-hover">
-                  <div className="h-2 rounded-full bg-accent" style={{ width: value }} />
+                  <div className="h-2 rounded-full bg-accent" style={{ width: typeof value === 'number' ? `${value}%` : '0%' }} />
                 </div>
               </div>
             ))}

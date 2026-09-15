@@ -5,7 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { PageHeader } from './PageHeader';
-import { api, hasApiSession } from '../services/api';
+import { api } from '../services/api';
 
 export function ScanPage() {
   const { projectId } = useParams();
@@ -14,8 +14,8 @@ export function ScanPage() {
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
-    if (!hasApiSession() || !projectId || projectId.length < 20) return;
-    api.listScans(projectId).then((scans) => setScan(scans[0] || null)).catch((err) => setError(err.message));
+    if (!projectId || projectId.length < 20) return;
+    api.getMe().then(() => api.listScans(projectId)).then((scans) => setScan(scans[0] || null)).catch((err) => setError(err.message));
   }, [projectId]);
 
   async function handleScan() {
@@ -50,7 +50,6 @@ export function ScanPage() {
       />
 
       {error && <div className="mb-6 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
-      {!hasApiSession() && <div className="mb-6 rounded-md border border-border bg-surface px-3 py-2 text-[12px] text-text-secondary">Demo Mode is showing sample scan data. Sign in and open a connected project to run a repository scan.</div>}
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>

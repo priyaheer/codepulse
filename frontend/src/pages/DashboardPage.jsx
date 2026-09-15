@@ -7,7 +7,7 @@ import { Button } from '../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { PageHeader } from './PageHeader';
 import { demoIssues, demoProjects, healthTrend, issueTrend, recentScans, scanSummary } from '../services/demoData';
-import { api, hasApiSession } from '../services/api';
+import { api } from '../services/api';
 
 const overview = [
   { label: 'Code quality', value: '84%', tone: 'success' },
@@ -22,8 +22,7 @@ export function DashboardPage() {
   const [liveScan, setLiveScan] = useState(null);
 
   useEffect(() => {
-    if (!hasApiSession()) return;
-    api.listProjects().then(async (projects) => {
+    api.getMe().then(() => api.listProjects()).then(async (projects) => {
       const project = projects[0];
       if (!project) return;
       localStorage.setItem('codepulse_active_project', project._id);
@@ -43,6 +42,10 @@ export function DashboardPage() {
     { label: 'Dependencies', value: `${liveScan.scores.dependencies}%`, tone: 'danger' },
   ] : overview;
   const liveSummary = liveScan?.issueCounts || scanSummary;
+
+  if (!liveProject) {
+    return <div><PageHeader eyebrow="Overview" title="Developer dashboard" description="Connect GitHub and select a repository to see real scan data." /><Card className="p-6"><p className="text-[14px] text-text-primary">No connected project is available yet.</p><p className="mt-2 text-[12px] text-text-secondary">Open Projects, connect an accessible GitHub repository, and run your first scan.</p><Button as={Link} to="/app/projects" variant="primary" size="sm" className="mt-4">Open Projects</Button></Card></div>;
+  }
 
   return (
     <div>
