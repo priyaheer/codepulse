@@ -2,6 +2,7 @@ import { Octokit } from '@octokit/rest';
 import { User } from '../models/User.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { config } from '../config/index.js';
+import { decryptToken } from './tokenCrypto.js';
 
 /**
  * Returns an authenticated Octokit instance for the given user.
@@ -12,7 +13,7 @@ export async function getOctokitForUser(userId) {
   if (!user?.githubAccessToken) {
     throw new AppError('GitHub connection not found — please reconnect your account', 401);
   }
-  return new Octokit({ auth: user.githubAccessToken });
+  return new Octokit({ auth: decryptToken(user.githubAccessToken) });
 }
 
 /**

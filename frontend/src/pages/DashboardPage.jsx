@@ -1,4 +1,5 @@
 import { AlertTriangle, ArrowUpRight, ChevronRight, ShieldCheck, Sparkles, TrendingUp, Clock3 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HealthGauge } from '../charts/HealthGauge';
 import { Badge } from '../components/ui/Badge';
@@ -6,6 +7,7 @@ import { Button } from '../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { PageHeader } from './PageHeader';
 import { demoIssues, demoProjects, healthTrend, issueTrend, recentScans, scanSummary } from '../services/demoData';
+import { api, hasApiSession } from '../services/api';
 
 const overview = [
   { label: 'Code quality', value: '84%', tone: 'success' },
@@ -16,7 +18,31 @@ const overview = [
 ];
 
 export function DashboardPage() {
-  const project = demoProjects[0];
+  const [liveProject, setLiveProject] = useState(null);
+  const [liveScan, setLiveScan] = useState(null);
+
+  useEffect(() => {
+    if (!hasApiSession()) return;
+    api.listProjects().then(async (projects) => {
+      const project = projects[0];
+      if (!project) return;
+      localStorage.setItem('codepulse_active_project', project._id);
+      setLiveProject(project);
+      const scans = await api.listScans(project._id);
+      setLiveScan(scans[0] || null);
+    }).catch(() => {});
+  }, []);
+
+  const demoProject = demoProjects[0];
+  const project = liveProject ? { ...demoProject, id: liveProject._id, name: liveProject.name, healthScore: liveScan?.healthScore ?? liveProject.latestHealthScore ?? 0, status: liveScan?.status || 'Not scanned', language: liveProject.language || 'Unknown' } : demoProject;
+  const liveOverview = liveScan?.scores ? [
+    { label: 'Code quality', value: `${liveScan.scores.codeQuality}%`, tone: 'success' },
+    { label: 'Security', value: `${liveScan.scores.security}%`, tone: 'warning' },
+    { label: 'Performance', value: `${liveScan.scores.performance}%`, tone: 'info' },
+    { label: 'Maintainability', value: `${liveScan.scores.maintainability}%`, tone: 'success' },
+    { label: 'Dependencies', value: `${liveScan.scores.dependencies}%`, tone: 'danger' },
+  ] : overview;
+  const liveSummary = liveScan?.issueCounts || scanSummary;
 
   return (
     <div>
@@ -46,7 +72,7 @@ export function DashboardPage() {
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3">
-            {overview.map(({ label, value, tone }) => (
+            {liveOverview.map(({ label, value, tone }) => (
               <div key={label} className="rounded-md border border-border bg-background p-3">
                 <p className="text-[11.5px] text-text-secondary">{label}</p>
                 <div className="mt-2 flex items-center justify-between">
@@ -63,10 +89,10 @@ export function DashboardPage() {
             <CardHeader title="Issue summary" description="Priority distribution across the latest scan" />
             <CardBody className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {[
-                { label: 'Critical', value: scanSummary.critical, accent: 'text-critical' },
-                { label: 'High', value: scanSummary.high, accent: 'text-high' },
-                { label: 'Medium', value: scanSummary.medium, accent: 'text-medium' },
-                { label: 'Low', value: scanSummary.low, accent: 'text-low' },
+                { label: 'Critical', value: liveSummary.critical, accent: 'text-critical' },
+                { label: 'High', value: liveSummary.high, accent: 'text-high' },
+                { label: 'Medium', value: liveSummary.medium, accent: 'text-medium' },
+                { label: 'Low', value: liveSummary.low, accent: 'text-low' },
               ].map(({ label, value, accent }) => (
                 <div key={label} className="rounded-md border border-border bg-background p-3">
                   <p className="text-[11.5px] text-text-secondary">{label}</p>

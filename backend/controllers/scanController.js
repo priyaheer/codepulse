@@ -10,10 +10,12 @@ import { scanPerformance } from '../scanners/performanceScanner.js';
 import { scanArchitecture } from '../scanners/architectureScanner.js';
 import { normalizeFindings } from '../scanners/issueNormalizer.js';
 import { calculateHealthScore } from '../scanners/healthScoreCalculator.js';
+import mongoose from 'mongoose';
 
 export async function startProjectScan(req, res, next) {
   let scan;
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) throw new AppError('Project not found', 404);
     const project = await Project.findOne({ _id: req.params.id, userId: req.user._id });
     if (!project) {
       throw new AppError('Project not found', 404);
@@ -92,6 +94,7 @@ export async function startProjectScan(req, res, next) {
 
 export async function listProjectScans(req, res, next) {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) throw new AppError('Project not found', 404);
     const project = await Project.findOne({ _id: req.params.id, userId: req.user._id });
     if (!project) throw new AppError('Project not found', 404);
     const scans = await Scan.find({ projectId: project._id }).sort({ createdAt: -1 });
@@ -103,6 +106,7 @@ export async function listProjectScans(req, res, next) {
 
 export async function getProjectScan(req, res, next) {
   try {
+    if (!mongoose.isValidObjectId(req.params.id) || !mongoose.isValidObjectId(req.params.scanId)) throw new AppError('Scan not found', 404);
     const project = await Project.findOne({ _id: req.params.id, userId: req.user._id });
     if (!project) throw new AppError('Project not found', 404);
     const scan = await Scan.findOne({ _id: req.params.scanId, projectId: project._id });

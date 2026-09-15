@@ -6,6 +6,7 @@ export async function listUserRepos(req, res, next) {
     const repos = await githubListUserRepos(req.user._id);
     res.json({ data: repos });
   } catch (err) {
+    if (err.status === 401 || err.status === 403) return next(new AppError('GitHub authorization expired — please reconnect your account', 401));
     next(err);
   }
 }
@@ -16,6 +17,7 @@ export async function getRepoDetails(req, res, next) {
     const details = await githubGetRepo(req.user._id, owner, repo);
     res.json({ data: details });
   } catch (err) {
+    if (err.status === 401 || err.status === 403) return next(new AppError('GitHub authorization expired — please reconnect your account', 401));
     next(err);
   }
 }

@@ -13,7 +13,8 @@ function isIgnored(filePath) {
 }
 
 function isSupported(filePath) {
-  return metadataFiles.has(path.basename(filePath)) || sourceExtensions.has(path.extname(filePath).toLowerCase());
+  const basename = path.basename(filePath);
+  return metadataFiles.has(basename) || basename.startsWith('.env') || sourceExtensions.has(path.extname(filePath).toLowerCase());
 }
 
 export async function scanRepository({ userId, owner, repository, branch }) {

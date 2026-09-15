@@ -43,8 +43,16 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(config.port, () => {
+    const server = app.listen(config.port, () => {
       console.log(`[server] CodePulse backend running on http://localhost:${config.port}`);
+    });
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`[server] Port ${config.port} is already in use. Stop the existing backend process or choose another PORT.`);
+        process.exit(1);
+      }
+      console.error('[server] Failed to listen:', err.message);
+      process.exit(1);
     });
   } catch (err) {
     console.error('[server] Failed to start:', err.message);

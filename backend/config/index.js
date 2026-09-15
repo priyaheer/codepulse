@@ -16,6 +16,7 @@ export const config = {
   mongoUri: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/codepulse',
 
   jwtSecret: process.env.JWT_SECRET || 'codepulse-dev-secret-change-in-production',
+  tokenEncryptionKey: process.env.TOKEN_ENCRYPTION_KEY || process.env.JWT_SECRET || 'codepulse-token-encryption-dev-key',
   jwtExpiresIn: '7d',
 
   session: {
@@ -28,10 +29,13 @@ export const config = {
     clientSecret: process.env.GITHUB_CLIENT_SECRET || 'demo-github-client-secret',
     callbackUrl: process.env.GITHUB_CALLBACK_URL || 'http://localhost:5000/api/auth/github/callback',
     oauthScopes: ['read:user', 'user:email', 'repo'],
+    oauthStateSecret: process.env.OAUTH_STATE_SECRET || process.env.JWT_SECRET || 'codepulse-oauth-state-dev-secret',
   },
 
   ai: {
     provider: process.env.AI_PROVIDER || 'gemini',
+    model: process.env.GEMINI_MODEL || 'gemini-flash-latest',
+    timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || '30000', 10),
     geminiApiKey: process.env.GEMINI_API_KEY || '',
     openaiApiKey: process.env.OPENAI_API_KEY || '',
   },

@@ -1,11 +1,30 @@
 import { Search, SlidersHorizontal } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Badge, SeverityBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { demoIssues } from '../services/demoData';
+import { api, hasApiSession } from '../services/api';
 import { PageHeader } from './PageHeader';
 
 export function IssuesPage() {
+  const [issues, setIssues] = useState(demoIssues);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const projectId = localStorage.getItem('codepulse_active_project');
+    if (!hasApiSession() || !projectId) return;
+    api.listIssues(projectId).then(setIssues).catch((err) => setError(err.message));
+  }, []);
+
+  const counts = issues.reduce((result, issue) => {
+    result.total += 1;
+    if (result[issue.severity] !== undefined) result[issue.severity] += 1;
+    if (issue.status === 'resolved') result.resolved += 1;
+    if (issue.status === 'ignored') result.ignored += 1;
+    return result;
+  }, { total: 0, critical: 0, high: 0, medium: 0, low: 0, resolved: 0, ignored: 0 });
+
   return (
     <div>
       <PageHeader
@@ -15,15 +34,17 @@ export function IssuesPage() {
         actions={<Button variant="secondary" size="sm" icon={<SlidersHorizontal size={13} />}>Filters</Button>}
       />
 
+      {error && <div className="mb-6 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
+
       <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-7">
         {[
-          { label: 'Total', value: 14 },
-          { label: 'Critical', value: 2 },
-          { label: 'High', value: 4 },
-          { label: 'Medium', value: 6 },
-          { label: 'Low', value: 2 },
-          { label: 'Resolved', value: 8 },
-          { label: 'Ignored', value: 1 },
+          { label: 'Total', value: counts.total },
+          { label: 'Critical', value: counts.critical },
+          { label: 'High', value: counts.high },
+          { label: 'Medium', value: counts.medium },
+          { label: 'Low', value: counts.low },
+          { label: 'Resolved', value: counts.resolved },
+          { label: 'Ignored', value: counts.ignored },
         ].map(({ label, value }) => (
           <div key={label} className="rounded-md border border-border bg-surface p-3">
             <p className="text-[11.5px] text-text-secondary">{label}</p>
@@ -48,7 +69,7 @@ export function IssuesPage() {
               </tr>
             </thead>
             <tbody>
-              {demoIssues.map((issue) => (
+              {issues.map((issue) => (
                 <tr key={issue.id} className="rounded-md bg-background align-top">
                   <td className="rounded-l-md border border-r-0 border-border px-3 py-2.5"><SeverityBadge severity={issue.severity} /></td>
                   <td className="border border-l-0 border-r-0 border-border px-3 py-2.5 text-text-primary"><a href={`/app/issues/${issue.id}`} className="font-medium hover:text-accent">{issue.title}</a></td>

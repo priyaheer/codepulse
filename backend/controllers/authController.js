@@ -4,17 +4,24 @@ import { config } from '../config/index.js';
 import { User } from '../models/User.js';
 import { generateToken } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
+import crypto from 'node:crypto';
+import { encryptToken } from '../services/tokenCrypto.js';
+
+function signOAuthState(value) {
+  return crypto.createHmac('sha256', config.github.oauthStateSecret).update(value).digest('base64url');
+}
 
 /**
  * Step 1: Redirect user to GitHub OAuth
  * GET /api/auth/github
  */
 export function githubRedirect(req, res) {
+  const nonce = `${Date.now()}.${crypto.randomBytes(18).toString('base64url')}`;
   const params = new URLSearchParams({
     client_id: config.github.clientId,
     redirect_uri: config.github.callbackUrl,
     scope: config.github.oauthScopes.join(' '),
-    state: Math.random().toString(36).slice(2),
+    state: `${nonce}.${signOAuthState(nonce)}`,
   });
   res.redirect(`https://github.com/login/oauth/authorize?${params}`);
 }
@@ -25,10 +32,19 @@ export function githubRedirect(req, res) {
  */
 export async function githubCallback(req, res, next) {
   try {
-    const { code, error } = req.query;
+    const { code, error, state } = req.query;
 
     if (error) throw new AppError('GitHub authorization was denied', 400);
     if (!code) throw new AppError('No OAuth code received', 400);
+    const stateParts = String(state || '').split('.');
+    const nonce = stateParts.slice(0, 2).join('.');
+    const signature = stateParts[2];
+    const age = Date.now() - Number(stateParts[0]);
+    const expectedSignature = signOAuthState(nonce);
+    const signaturesMatch = signature && signature.length === expectedSignature.length && crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
+    if (!nonce || !signaturesMatch || age < 0 || age > 10 * 60 * 1000) {
+      throw new AppError('Invalid or expired OAuth state', 400);
+    }
 
     // Exchange code for access token
     const tokenRes = await axios.post(
@@ -72,7 +88,7 @@ export async function githubCallback(req, res, next) {
         name: ghUser.name || ghUser.login,
         email,
         avatarUrl: ghUser.avatar_url,
-        githubAccessToken: access_token, // TODO: encrypt in production
+        githubAccessToken: encryptToken(access_token),
       },
       { upsert: true, new: true }
     );
@@ -96,14 +112,14 @@ export async function githubCallback(req, res, next) {
  * GET /api/auth/me — returns current user (no token)
  */
 export async function getMe(req, res) {
-  res.json({
+  res.json({ data: {
     id: req.user._id,
     username: req.user.username,
     name: req.user.name,
     email: req.user.email,
     avatarUrl: req.user.avatarUrl,
     aiProviderPreference: req.user.aiProviderPreference,
-  });
+  } });
 }
 
 /**
