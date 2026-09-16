@@ -1,9 +1,11 @@
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { PageHeader } from './PageHeader';
-import { dependencyRows } from '../services/demoData';
+import { useProjectScan } from '../utils/useProjectScan';
 
 export function DependenciesPage() {
+  const { project, scan, issues, loading, error } = useProjectScan();
+  const findings = issues.filter((issue) => issue.category === 'dependency');
   return (
     <div>
       <PageHeader
@@ -11,13 +13,17 @@ export function DependenciesPage() {
         title="Dependencies"
         description="Production and development packages, stale versions, and upgrade recommendations based on the latest audit data."
       />
+      {error && <div className="mb-6 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
+      {loading && <div className="rounded-md border border-border bg-surface p-4 text-[13px] text-text-secondary">Loading real dependency findings...</div>}
+      {!loading && !project && <div className="rounded-md border border-border bg-surface p-4 text-[13px] text-text-secondary">Connect a project to view dependency analysis.</div>}
+      {!loading && project && !scan && <div className="rounded-md border border-dashed border-border bg-surface p-4 text-[13px] text-text-secondary">No completed scan is available for this project.</div>}
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {scan && <><div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: 'Total dependencies', value: 84 },
-          { label: 'Outdated packages', value: 11 },
-          { label: 'Vulnerable packages', value: 5 },
-          { label: 'Production', value: 52 },
+          { label: 'Detected dependency findings', value: findings.length },
+          { label: 'Dependency score', value: scan.scores?.dependencies ?? 'Not available' },
+          { label: 'Vulnerability data', value: 'Not available' },
+          { label: 'Audit source', value: 'Not available' },
         ].map(({ label, value }) => (
           <div key={label} className="rounded-md border border-border bg-surface p-3">
             <p className="text-[11.5px] text-text-secondary">{label}</p>
@@ -41,20 +47,21 @@ export function DependenciesPage() {
               </tr>
             </thead>
             <tbody>
-              {dependencyRows.map((row) => (
-                <tr key={row.name} className="align-top">
-                  <td className="border-t border-border py-2.5 pr-4 text-text-primary">{row.name}</td>
-                  <td className="border-t border-border py-2.5 pr-4 text-text-secondary">{row.current}</td>
-                  <td className="border-t border-border py-2.5 pr-4 text-text-secondary">{row.latest}</td>
-                  <td className="border-t border-border py-2.5 pr-4"><Badge variant={row.risk === 'Medium' ? 'warning' : 'neutral'}>{row.risk}</Badge></td>
-                  <td className="border-t border-border py-2.5 pr-4 text-text-secondary">{row.type}</td>
-                  <td className="border-t border-border py-2.5 text-text-secondary">{row.recommendation}</td>
+              {findings.map((finding) => (
+                <tr key={finding._id} className="align-top">
+                  <td className="border-t border-border py-2.5 pr-4 text-text-primary">{finding.title}</td>
+                  <td className="border-t border-border py-2.5 pr-4 text-text-secondary">{finding.evidence || 'Not available'}</td>
+                  <td className="border-t border-border py-2.5 pr-4 text-text-secondary">Not checked</td>
+                  <td className="border-t border-border py-2.5 pr-4"><Badge variant={finding.severity === 'high' ? 'danger' : 'warning'}>{finding.severity}</Badge></td>
+                  <td className="border-t border-border py-2.5 pr-4 text-text-secondary">{finding.file}:{finding.line || '—'}</td>
+                  <td className="border-t border-border py-2.5 text-text-secondary">{finding.description}</td>
                 </tr>
               ))}
+              {findings.length === 0 && <tr><td colSpan="6" className="py-6 text-center text-text-secondary">No dependency findings detected by the checks currently supported.</td></tr>}
             </tbody>
           </table>
         </CardBody>
-      </Card>
+      </Card></>}
     </div>
   );
 }

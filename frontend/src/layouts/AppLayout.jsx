@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { Sidebar, MobileSidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { CommandPalette, useCommandPalette } from '../components/ui/CommandPalette';
@@ -8,6 +8,7 @@ import { api } from '../services/api';
 export function AppLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const { open, setOpen } = useCommandPalette();
 
   useEffect(() => {
@@ -16,9 +17,14 @@ export function AppLayout() {
       if (active) setUser(me);
     }).catch(() => {
       if (active) setUser(null);
+    }).finally(() => {
+      if (active) setAuthChecked(true);
     });
     return () => { active = false; };
   }, []);
+
+  if (!authChecked) return <div className="flex min-h-screen items-center justify-center bg-background text-[13px] text-text-secondary">Checking authenticated session...</div>;
+  if (!user) return <Navigate to="/login" replace />;
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">

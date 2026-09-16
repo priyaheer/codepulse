@@ -1,14 +1,31 @@
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
+import { useEffect, useState } from 'react';
+import { api } from '../services/api';
 import { PageHeader } from './PageHeader';
 
-const history = [
-  { id: 'scan-6', title: 'Production scan', health: 81, status: 'completed', date: '2 hours ago' },
-  { id: 'scan-5', title: 'Release candidate', health: 76, status: 'completed', date: '1 day ago' },
-  { id: 'scan-4', title: 'Dependency review', health: 72, status: 'completed', date: '3 days ago' },
-];
-
 export function ScanHistoryPage() {
+  const [analytics, setAnalytics] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const projects = await api.listProjects();
+        const projectId = localStorage.getItem('codepulse_active_project') || projects[0]?._id;
+        if (!projectId) return;
+        localStorage.setItem('codepulse_active_project', projectId);
+        const result = await api.getAnalytics(projectId);
+        if (active) setAnalytics(result);
+      } catch (err) {
+        if (active) setError(err.message);
+      }
+    }
+    load();
+    return () => { active = false; };
+  }, []);
+
   return (
     <div>
       <PageHeader
@@ -16,22 +33,26 @@ export function ScanHistoryPage() {
         title="History"
         description="Track repository health over time and compare the most recent scans."
       />
+      {error && <div className="mb-6 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
+      {!analytics && !error && <div className="rounded-md border border-border bg-surface px-4 py-5 text-[13px] text-text-secondary">Loading real scan history...</div>}
 
       <div className="space-y-4">
-        {history.map((scan) => (
+        {analytics?.history.map((scan) => (
           <Card key={scan.id}>
+            <CardHeader title={`${analytics.project.repository} · ${scan.branch || 'unknown branch'}`} description={scan.commitSha ? `Commit ${scan.commitSha}` : 'Commit unavailable'} />
             <CardBody className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-[14px] font-medium text-text-primary">{scan.title}</p>
-                <p className="text-[12px] text-text-secondary">{scan.date}</p>
+                <p className="text-[14px] font-medium text-text-primary">{new Date(scan.completedAt || scan.createdAt).toLocaleString()}</p>
+                <p className="text-[12px] text-text-secondary">{scan.durationMs ? `${Math.round(scan.durationMs / 1000)}s` : 'Duration unavailable'} · {scan.findings.total} issues · {scan.findings.critical} critical · {scan.findings.high} high</p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-[14px] font-semibold text-text-primary">{scan.health}</span>
-                <Badge variant={scan.health >= 80 ? 'success' : 'warning'}>{scan.status}</Badge>
+                <span className="text-[14px] font-semibold text-text-primary">{scan.healthScore ?? 'Not available'}</span>
+                <Badge variant={scan.healthScore >= 80 ? 'success' : 'warning'}>{scan.status}</Badge>
               </div>
             </CardBody>
           </Card>
         ))}
+        {analytics?.history.length === 0 && <div className="rounded-md border border-border bg-surface px-4 py-5 text-[13px] text-text-secondary">Run your first scan to build real scan history.</div>}
       </div>
     </div>
   );

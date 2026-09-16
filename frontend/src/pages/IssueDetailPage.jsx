@@ -1,25 +1,39 @@
-import { ArrowRight, Copy, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Copy, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Badge, SeverityBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
-import { demoIssues } from '../services/demoData';
 import { api } from '../services/api';
 import { PageHeader } from './PageHeader';
 
 export function IssueDetailPage() {
   const { issueId } = useParams();
-  const [issue, setIssue] = useState(demoIssues.find((item) => item.id === issueId) || demoIssues[0]);
+  const [issue, setIssue] = useState(null);
   const [aiResult, setAiResult] = useState(null);
   const [loading, setLoading] = useState('');
   const [error, setError] = useState('');
   const liveIssue = /^[a-f\d]{24}$/i.test(issueId || '');
 
   useEffect(() => {
-    if (!liveIssue) return;
-    api.getMe().then(() => api.getIssue(issueId)).then((result) => setIssue(result)).catch(() => {});
+    if (!liveIssue) {
+      setError('This issue link is invalid or no longer available.');
+      return;
+    }
+    api.getMe().then(() => api.getIssue(issueId)).then((result) => setIssue(result)).catch((err) => setError(err.message));
   }, [issueId, liveIssue]);
+
+  async function updateStatus(status) {
+    setLoading(status);
+    setError('');
+    try {
+      setIssue(await api.updateIssueStatus(issueId, status));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading('');
+    }
+  }
 
   async function runAI(action) {
     if (!liveIssue) {
@@ -40,6 +54,9 @@ export function IssueDetailPage() {
 
   return (
     <div>
+      {!issue && !error && <div className="rounded-md border border-border bg-surface p-4 text-[13px] text-text-secondary">Loading issue evidence...</div>}
+      {!issue && error && <div className="rounded-md border border-danger/40 bg-danger/10 p-4 text-[13px] text-danger">{error}</div>}
+      {issue && <>
       <PageHeader
         eyebrow="Issue detail"
         title={issue.title}
@@ -109,12 +126,13 @@ export function IssueDetailPage() {
             </div>
             {aiResult?.diff && <div className="rounded-md border border-border bg-background p-3"><p className="text-[11.5px] text-text-secondary">Review-only diff</p><pre className="mt-2 overflow-auto rounded-md bg-surface p-3 text-[12px] whitespace-pre-wrap text-text-primary">{aiResult.diff}</pre></div>}
             <div className="flex items-center gap-2">
-              <Button variant="primary" size="sm" icon={<CheckCircle2 size={13} />}>Mark resolved</Button>
-              <Button variant="secondary" size="sm">Ignore</Button>
+              <Button variant="primary" size="sm" icon={<CheckCircle2 size={13} />} onClick={() => updateStatus('resolved')} disabled={loading !== '' || issue.status === 'resolved'}>{loading === 'resolved' ? 'Saving...' : 'Mark resolved'}</Button>
+              <Button variant="secondary" size="sm" onClick={() => updateStatus('ignored')} disabled={loading !== '' || issue.status === 'ignored'}>{loading === 'ignored' ? 'Saving...' : 'Ignore'}</Button>
             </div>
           </CardBody>
         </Card>
       </div>
+      </>}
     </div>
   );
 }

@@ -8,6 +8,10 @@ const sourceMap = {
   architecture: 'architecture-scanner',
 };
 
+export function issueFingerprint(finding, projectId) {
+  return [projectId || '', finding.category || '', finding.rule || '', finding.file || '', finding.line || '', String(finding.evidence || '').trim()].join('|').toLowerCase();
+}
+
 export function normalizeIssue(finding, scannerName) {
   const category = validCategories.has(finding.category) ? finding.category : 'code-quality';
   const severity = validSeverities.has(finding.severity) ? finding.severity : 'low';

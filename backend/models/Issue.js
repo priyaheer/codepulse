@@ -4,6 +4,7 @@ const issueSchema = new mongoose.Schema(
   {
     scanId: { type: mongoose.Schema.Types.ObjectId, ref: 'Scan', required: true, index: true },
     projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true, index: true },
+    fingerprint: { type: String, required: true, index: true },
 
     // Provenance — important for UI trust labels
     source: {

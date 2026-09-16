@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { Badge, SeverityBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
-import { demoIssues } from '../services/demoData';
 import { api } from '../services/api';
 import { PageHeader } from './PageHeader';
 
@@ -70,17 +69,20 @@ export function IssuesPage() {
             </thead>
             <tbody>
               {issues.length === 0 && <tr><td colSpan="7" className="px-3 py-8 text-center text-text-secondary">No real scan issues are available yet.</td></tr>}
-              {issues.map((issue) => (
-                <tr key={issue.id} className="rounded-md bg-background align-top">
+              {issues.map((issue) => {
+                const issueId = issue.id || issue._id;
+                return (
+                <tr key={issueId} className="rounded-md bg-background align-top">
                   <td className="rounded-l-md border border-r-0 border-border px-3 py-2.5"><SeverityBadge severity={issue.severity} /></td>
-                  <td className="border border-l-0 border-r-0 border-border px-3 py-2.5 text-text-primary"><a href={`/app/issues/${issue.id}`} className="font-medium hover:text-accent">{issue.title}</a></td>
+                  <td className="border border-l-0 border-r-0 border-border px-3 py-2.5 text-text-primary"><a href={`/app/issues/${issueId}`} className="font-medium hover:text-accent">{issue.title}</a></td>
                   <td className="border border-l-0 border-r-0 border-border px-3 py-2.5 text-text-secondary">{issue.file}</td>
                   <td className="border border-l-0 border-r-0 border-border px-3 py-2.5 text-text-secondary">{issue.line}</td>
                   <td className="border border-l-0 border-r-0 border-border px-3 py-2.5 text-text-secondary">{issue.category}</td>
                   <td className="border border-l-0 border-r-0 border-border px-3 py-2.5 text-text-secondary">{issue.source}</td>
                   <td className="rounded-r-md border border-l-0 border-border px-3 py-2.5"><Badge variant={issue.status === 'resolved' ? 'success' : issue.status === 'in_progress' ? 'warning' : 'neutral'}>{issue.status}</Badge></td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </CardBody>

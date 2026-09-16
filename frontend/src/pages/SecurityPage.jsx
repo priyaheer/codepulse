@@ -1,15 +1,12 @@
-import { AlertTriangle, Lock, ShieldCheck, KeyRound } from 'lucide-react';
-import { Badge, SeverityBadge } from '../components/ui/Badge';
+import { KeyRound } from 'lucide-react';
+import { SeverityBadge } from '../components/ui/Badge';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { PageHeader } from './PageHeader';
-
-const findings = [
-  { title: 'Unvalidated payment payload', severity: 'critical', file: 'src/payments/checkout.ts' },
-  { title: 'Legacy JWT secret fallback', severity: 'high', file: 'server/auth.ts' },
-  { title: 'Verbose error leakage', severity: 'medium', file: 'server/error.ts' },
-];
+import { useProjectScan } from '../utils/useProjectScan';
 
 export function SecurityPage() {
+  const { project, scan, issues, loading, error } = useProjectScan();
+  const findings = issues.filter((issue) => issue.category === 'security');
   return (
     <div>
       <PageHeader
@@ -17,18 +14,22 @@ export function SecurityPage() {
         title="Security overview"
         description="Repository security posture with masked secrets, detection history, and mitigation guidance."
       />
+      {error && <div className="mb-6 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
+      {loading && <div className="rounded-md border border-border bg-surface p-4 text-[13px] text-text-secondary">Loading real security findings...</div>}
+      {!loading && !project && <div className="rounded-md border border-border bg-surface p-4 text-[13px] text-text-secondary">Connect a project to view security analysis.</div>}
+      {!loading && project && !scan && <div className="rounded-md border border-dashed border-border bg-surface p-4 text-[13px] text-text-secondary">No completed scan is available for this project.</div>}
 
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      {scan && <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <Card>
           <CardHeader title="Security score" description="Latest scan summary" />
           <CardBody className="space-y-4">
-            <div className="text-[36px] font-semibold text-text-primary">87</div>
+            <div className="text-[36px] font-semibold text-text-primary">{scan.scores?.security ?? 'Not available'}</div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-md border border-border bg-background p-3"><p className="text-[12px] text-text-secondary">Secrets</p><p className="mt-2 text-[20px] font-semibold text-text-primary">2</p></div>
-              <div className="rounded-md border border-border bg-background p-3"><p className="text-[12px] text-text-secondary">Vulnerabilities</p><p className="mt-2 text-[20px] font-semibold text-text-primary">5</p></div>
+              <div className="rounded-md border border-border bg-background p-3"><p className="text-[12px] text-text-secondary">Detected findings</p><p className="mt-2 text-[20px] font-semibold text-text-primary">{findings.length}</p></div>
+              <div className="rounded-md border border-border bg-background p-3"><p className="text-[12px] text-text-secondary">Audit data</p><p className="mt-2 text-[20px] font-semibold text-text-primary">Not available</p></div>
             </div>
             <div className="rounded-md border border-border bg-background p-3 text-[12px] text-text-secondary">
-              <p className="flex items-center gap-2"><KeyRound size={14} className="text-warning" /> Secret preview is masked: sk_live_************</p>
+              <p className="flex items-center gap-2"><KeyRound size={14} className="text-warning" /> Evidence is masked by the scanner before display.</p>
             </div>
           </CardBody>
         </Card>
@@ -47,9 +48,10 @@ export function SecurityPage() {
                 </div>
               </div>
             ))}
+            {findings.length === 0 && <p className="text-[13px] text-text-secondary">No detected security issues from the checks currently supported.</p>}
           </CardBody>
         </Card>
-      </div>
+      </div>}
     </div>
   );
 }

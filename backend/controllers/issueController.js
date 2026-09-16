@@ -3,13 +3,15 @@ import { Project } from '../models/Project.js';
 import { AISuggestion } from '../models/AISuggestion.js';
 import { AppError } from '../middleware/errorHandler.js';
 import mongoose from 'mongoose';
+import { Scan } from '../models/Scan.js';
 
 export async function listIssues(req, res, next) {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) throw new AppError('Project not found', 404);
     const project = await Project.findOne({ _id: req.params.id, userId: req.user._id });
     if (!project) throw new AppError('Project not found', 404);
-    const issues = await Issue.find({ projectId: project._id }).sort({ createdAt: -1 });
+    const latestScan = await Scan.findOne({ projectId: project._id, status: 'completed' }).sort({ completedAt: -1, createdAt: -1 }).select('_id');
+    const issues = latestScan ? await Issue.find({ projectId: project._id, scanId: latestScan._id }).sort({ createdAt: -1 }) : [];
     res.json({ data: issues });
   } catch (err) {
     next(err);
@@ -34,6 +36,7 @@ export async function getIssue(req, res, next) {
 export async function updateIssueStatus(req, res, next) {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) throw new AppError('Issue not found', 404);
+    if (!['open', 'in_progress', 'resolved', 'ignored'].includes(req.body?.status)) throw new AppError('Invalid issue status', 400);
     const issue = await Issue.findById(req.params.id);
     if (!issue) {
       throw new AppError('Issue not found', 404);

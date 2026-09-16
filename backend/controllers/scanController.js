@@ -8,7 +8,7 @@ import { scanSecurity } from '../scanners/securityScanner.js';
 import { scanDependencies } from '../scanners/dependencyScanner.js';
 import { scanPerformance } from '../scanners/performanceScanner.js';
 import { scanArchitecture } from '../scanners/architectureScanner.js';
-import { normalizeFindings } from '../scanners/issueNormalizer.js';
+import { normalizeFindings, issueFingerprint } from '../scanners/issueNormalizer.js';
 import { calculateHealthScore } from '../scanners/healthScoreCalculator.js';
 import mongoose from 'mongoose';
 
@@ -73,7 +73,7 @@ export async function startProjectScan(req, res, next) {
     await scan.save();
 
     if (findings.length) {
-      await Issue.insertMany(findings.map((finding) => ({ ...finding, scanId: scan._id, projectId: project._id })));
+      await Issue.insertMany(findings.map((finding) => ({ ...finding, fingerprint: issueFingerprint(finding, project._id), scanId: scan._id, projectId: project._id })));
     }
     project.latestHealthScore = scan.healthScore;
     project.latestScanId = scan._id;

@@ -48,8 +48,8 @@ export function SidebarContent({ onNavigate }) {
       </div>
       <div className="border-t border-border p-3">
         <div className="rounded-md border border-border bg-background-elevated px-3 py-2.5">
-          <p className="text-[12px] font-medium text-text-primary">Demo project</p>
-          <p className="text-[11.5px] text-text-secondary mt-0.5">Exploring with sample data</p>
+          <p className="text-[12px] font-medium text-text-primary">Connected GitHub</p>
+          <p className="text-[11.5px] text-text-secondary mt-0.5">Real repository data</p>
         </div>
       </div>
     </div>
