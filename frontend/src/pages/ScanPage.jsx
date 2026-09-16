@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock3, RefreshCcw, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, Clock3, LoaderCircle, RefreshCcw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
@@ -46,10 +46,23 @@ export function ScanPage() {
         eyebrow="Repository scan"
         title="Scan status"
         description="Live repository check with static analysis, dependency review, and security findings."
-        actions={<Button variant="secondary" size="sm" icon={<RefreshCcw size={13} />} onClick={handleScan} disabled={starting}>{starting ? 'Scanning...' : 'Rescan'}</Button>}
+        actions={<Button variant="secondary" size="sm" icon={starting ? <LoaderCircle size={13} className="animate-spin" /> : <RefreshCcw size={13} />} onClick={handleScan} disabled={starting}>{starting ? 'Scanning...' : 'Rescan'}</Button>}
       />
 
       {error && <div className="mb-6 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
+
+      <div className="relative min-h-[420px]">
+        {starting && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-background/80 backdrop-blur-[2px]" role="status" aria-live="polite">
+            <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-surface px-8 py-7 text-center shadow-[var(--cp-shadow-strong)]">
+              <LoaderCircle size={42} strokeWidth={1.7} className="animate-spin text-accent" />
+              <div>
+                <p className="text-[15px] font-semibold text-text-primary">Scanning repository</p>
+                <p className="mt-1 text-[12px] text-text-secondary">Analyzing the latest GitHub source...</p>
+              </div>
+            </div>
+          </div>
+        )}
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
@@ -96,6 +109,7 @@ export function ScanPage() {
             </div>
           </CardBody>
         </Card>
+      </div>
       </div>
     </div>
   );
