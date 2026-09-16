@@ -8,11 +8,11 @@ export function FinalCTA() {
     <section className="border-b border-border">
       <div className="mx-auto max-w-6xl px-6 py-24 text-center">
         <h2 className="text-[28px] sm:text-[34px] font-semibold tracking-tight text-text-primary max-w-xl mx-auto leading-tight">
-          Know your codebase before your codebase surprises you.
+          Your codebase changes every day. Know what changed.
         </h2>
         <div className="mt-8 flex justify-center gap-3">
           <Button as={Link} to="/login" size="lg" iconRight={<ArrowRight size={16} />}>
-            Analyze your repository
+            Sign in with GitHub
           </Button>
           <Button as={Link} to="/demo" variant="outline" size="lg">
             Explore demo
@@ -23,11 +23,7 @@ export function FinalCTA() {
   );
 }
 
-const footerLinks = {
-  Product: ['Features', 'Security', 'Pricing', 'Changelog'],
-  Company: ['About', 'Blog', 'Careers'],
-  Resources: ['Documentation', 'API', 'Status'],
-};
+const footerLinks = { Product: [['Features', '#features'], ['How it works', '#how-it-works'], ['Security', '#security']], Demo: [['Explore Demo', '/demo'], ['Sign in', '/login']] };
 
 export function Footer() {
   return (
@@ -39,14 +35,15 @@ export function Footer() {
             Understand your code. Find problems. Fix them. Improve continuously.
           </p>
         </div>
+        <div><p className="text-[12.5px] font-medium text-text-primary mb-3">CodePulse AI</p><p className="max-w-[240px] text-[13px] leading-relaxed text-text-secondary">A codebase health and developer intelligence platform built around real repository evidence.</p></div>
         {Object.entries(footerLinks).map(([section, links]) => (
           <div key={section}>
             <p className="text-[12.5px] font-medium text-text-primary mb-3">{section}</p>
             <ul className="space-y-2">
               {links.map((link) => (
                 <li key={link}>
-                  <a href="#" className="text-[13px] text-text-secondary hover:text-text-primary transition-colors">
-                    {link}
+                  <a href={link[1]} className="text-[13px] text-text-secondary hover:text-text-primary transition-colors">
+                    {link[0]}
                   </a>
                 </li>
               ))}

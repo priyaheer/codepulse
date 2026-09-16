@@ -11,24 +11,24 @@ export function BeforeAfter() {
   return (
     <section className="border-b border-border">
       <div className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-[26px] font-semibold tracking-tight text-text-primary max-w-md">
-          Fix things. Watch the score move.
+        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-accent">Example scan comparison</p>
+        <h2 className="mt-3 text-[26px] font-semibold tracking-tight text-text-primary max-w-md">
+          Scan. Fix. Rescan. Know what changed.
         </h2>
         <p className="mt-3 text-[14px] text-text-secondary max-w-lg">
-          Every scan is a snapshot. Once you've addressed what matters, rescan and see
-          the difference — measured, not implied.
+          Illustrative values show the product loop. Real comparisons use completed scans stored for your repository.
         </p>
 
         <div className="mt-12 flex flex-col md:flex-row items-center gap-10 md:gap-16">
           <div className="flex items-center gap-8">
             <div className="text-center">
               <HealthGauge score={64} size={112} />
-              <p className="mt-2 text-[12px] text-text-muted">Scan #1 · Sep 1</p>
+              <p className="mt-2 text-[12px] text-text-muted">Example scan A</p>
             </div>
             <div className="text-text-muted text-[20px]">→</div>
             <div className="text-center">
               <HealthGauge score={81} size={112} />
-              <p className="mt-2 text-[12px] text-text-muted">Scan #4 · Sep 15</p>
+              <p className="mt-2 text-[12px] text-text-muted">Example scan B</p>
             </div>
           </div>
 
