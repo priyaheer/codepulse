@@ -11,6 +11,22 @@ function signOAuthState(value) {
   return crypto.createHmac('sha256', config.github.oauthStateSecret).update(value).digest('base64url');
 }
 
+export function serializeUserProfile(user) {
+  return {
+    id: user._id?.toString?.() || user.id,
+    githubId: user.githubId,
+    username: user.username,
+    name: user.name || user.username,
+    email: user.email || '',
+    avatarUrl: user.avatarUrl || '',
+    githubProfileUrl: user.githubProfileUrl || `https://github.com/${user.username || ''}`,
+    publicRepos: user.publicRepos ?? 0,
+    followers: user.followers ?? 0,
+    following: user.following ?? 0,
+    aiProviderPreference: user.aiProviderPreference || 'gemini',
+  };
+}
+
 /**
  * Step 1: Redirect user to GitHub OAuth
  * GET /api/auth/github
@@ -88,9 +104,13 @@ export async function githubCallback(req, res, next) {
         name: ghUser.name || ghUser.login,
         email,
         avatarUrl: ghUser.avatar_url,
+        githubProfileUrl: ghUser.html_url,
+        publicRepos: ghUser.public_repos ?? 0,
+        followers: ghUser.followers ?? 0,
+        following: ghUser.following ?? 0,
         githubAccessToken: encryptToken(access_token),
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
     // Issue JWT and redirect to frontend
@@ -112,19 +132,12 @@ export async function githubCallback(req, res, next) {
  * GET /api/auth/me — returns current user (no token)
  */
 export async function getMe(req, res) {
-  res.json({ data: {
-    id: req.user._id,
-    username: req.user.username,
-    name: req.user.name,
-    email: req.user.email,
-    avatarUrl: req.user.avatarUrl,
-    aiProviderPreference: req.user.aiProviderPreference,
-  } });
+  res.json({ data: serializeUserProfile(req.user) });
 }
 
 /**
  * POST /api/auth/logout
  */
 export function logout(req, res) {
-  res.clearCookie('cp_token').json({ message: 'Logged out' });
+  res.clearCookie('cp_token', { path: '/', httpOnly: true, sameSite: 'lax', secure: !config.isDev }).json({ success: true, message: 'Logged out' });
 }

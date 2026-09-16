@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 import { config } from './config/index.js';
 import { connectDB } from './services/db.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
@@ -13,6 +14,7 @@ dotenv.config();
 
 const app = express();
 
+app.use(cookieParser());
 app.use(
   cors({
     origin: config.clientUrl,

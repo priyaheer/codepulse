@@ -15,8 +15,12 @@ export async function listProjects(req, res, next) {
 export async function createProject(req, res, next) {
   try {
     const { name, owner, repository, description, language, githubRepoId, defaultBranch, isPrivate, stars } = req.body;
+    if (!owner || !(repository || name)) throw new AppError('A GitHub repository is required', 400);
     const repoName = repository || name;
     const repo = await getRepo(req.user._id, owner, repoName);
+    if (githubRepoId && Number(githubRepoId) !== Number(repo.id)) {
+      throw new AppError('Selected repository does not match the authenticated GitHub account', 403);
+    }
 
     const existing = await Project.findOne({ userId: req.user._id, name: repo.name, owner: repo.owner });
     if (existing) {
@@ -25,8 +29,6 @@ export async function createProject(req, res, next) {
 
     const project = await Project.create({
       userId: req.user._id,
-      name,
-      owner,
       githubRepoId: githubRepoId || repo.id,
       name: repo.name,
       owner: repo.owner,

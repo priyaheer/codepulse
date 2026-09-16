@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('codepulse_token');
@@ -8,14 +8,25 @@ async function request(path, options = {}) {
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.message || 'Request failed');
-  return payload.data;
+  if (!response.ok) {
+    const message = payload?.error?.message || payload?.message || `Request failed (${response.status})`;
+    throw new Error(message);
+  }
+  return payload.data ?? payload;
 }
 
 export const api = {
   getMe: () => request('/auth/me'),
+  logout: async () => {
+    try {
+      await request('/auth/logout', { method: 'POST' });
+    } finally {
+      localStorage.removeItem('codepulse_token');
+      document.cookie = 'cp_token=; Max-Age=0; path=/; SameSite=Lax';
+    }
+  },
   githubLoginUrl: `${API_URL}/auth/github`,
-  listRepos: () => request('/github/repos'),
+  listRepos: (page = 1, perPage = 30) => request(`/github/repos?page=${page}&perPage=${perPage}`),
   createProject: (repository) => request('/projects', { method: 'POST', body: JSON.stringify({ name: repository.name, owner: repository.owner, repository: repository.name, githubRepoId: repository.id, defaultBranch: repository.defaultBranch, description: repository.description, language: repository.language, isPrivate: repository.isPrivate, stars: repository.stars }) }),
   listProjects: () => request('/projects'),
   getProject: (id) => request(`/projects/${id}`),

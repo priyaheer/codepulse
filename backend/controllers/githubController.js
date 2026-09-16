@@ -3,7 +3,9 @@ import { listUserRepos as githubListUserRepos, getRepo as githubGetRepo } from '
 
 export async function listUserRepos(req, res, next) {
   try {
-    const repos = await githubListUserRepos(req.user._id);
+    const page = Number(req.query.page || 1);
+    const perPage = Number(req.query.perPage || 30);
+    const repos = await githubListUserRepos(req.user._id, page, perPage);
     res.json({ data: repos });
   } catch (err) {
     if (err.status === 401 || err.status === 403) return next(new AppError('GitHub authorization expired — please reconnect your account', 401));

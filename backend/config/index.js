@@ -9,7 +9,7 @@ function required(name) {
 }
 
 export const config = {
-  port: parseInt(process.env.PORT || '5000', 10),
+  port: parseInt(process.env.PORT || '5001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   isDev: process.env.NODE_ENV !== 'production',
 
@@ -27,7 +27,7 @@ export const config = {
   github: {
     clientId: process.env.GITHUB_CLIENT_ID || 'demo-github-client-id',
     clientSecret: process.env.GITHUB_CLIENT_SECRET || 'demo-github-client-secret',
-    callbackUrl: process.env.GITHUB_CALLBACK_URL || 'http://localhost:5000/api/auth/github/callback',
+    callbackUrl: process.env.GITHUB_CALLBACK_URL || 'http://localhost:5001/api/auth/github/callback',
     oauthScopes: ['read:user', 'user:email', 'repo'],
     oauthStateSecret: process.env.OAUTH_STATE_SECRET || process.env.JWT_SECRET || 'codepulse-oauth-state-dev-secret',
   },

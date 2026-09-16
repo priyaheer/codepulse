@@ -4,6 +4,14 @@ import { AppError } from '../middleware/errorHandler.js';
 import { config } from '../config/index.js';
 import { decryptToken } from './tokenCrypto.js';
 
+function githubAppError(error, fallbackMessage = 'GitHub request failed') {
+  const status = error?.status;
+  if (status === 401) return new AppError('GitHub authorization expired — please reconnect your account', 401);
+  if (status === 403) return new AppError('GitHub denied access. Check the OAuth repository permissions and reconnect.', 403);
+  if (status === 404) return new AppError('Repository not found or not accessible to this GitHub account', 404);
+  return new AppError(fallbackMessage, 502);
+}
+
 /**
  * Returns an authenticated Octokit instance for the given user.
  * The token is fetched with the +select+ override since it's excluded by default.
@@ -20,23 +28,31 @@ export async function getOctokitForUser(userId) {
  * List repositories accessible to the authenticated user.
  */
 export async function listUserRepos(userId, page = 1, perPage = 30) {
-  const octokit = await getOctokitForUser(userId);
-  const { data } = await octokit.rest.repos.listForAuthenticatedUser({
-    sort: 'updated',
-    per_page: perPage,
-    page,
-    type: 'all',
-  });
-  return data.map(normalizeRepo);
+  try {
+    const octokit = await getOctokitForUser(userId);
+    const { data } = await octokit.rest.repos.listForAuthenticatedUser({
+      sort: 'updated',
+      per_page: Math.min(Math.max(perPage, 1), 100),
+      page: Math.max(page, 1),
+      type: 'all',
+    });
+    return data.map(normalizeRepo);
+  } catch (error) {
+    throw githubAppError(error, 'Could not load repositories from GitHub');
+  }
 }
 
 /**
  * Get a single repo's metadata.
  */
 export async function getRepo(userId, owner, repo) {
-  const octokit = await getOctokitForUser(userId);
-  const { data } = await octokit.rest.repos.get({ owner, repo });
-  return normalizeRepo(data);
+  try {
+    const octokit = await getOctokitForUser(userId);
+    const { data } = await octokit.rest.repos.get({ owner, repo });
+    return normalizeRepo(data);
+  } catch (error) {
+    throw githubAppError(error, 'Could not verify the selected GitHub repository');
+  }
 }
 
 /**
@@ -90,13 +106,16 @@ function normalizeRepo(data) {
     id: data.id,
     name: data.name,
     fullName: data.full_name,
-    owner: data.owner.login,
+    owner: data.owner?.login || data.owner || '',
+    ownerAvatar: data.owner?.avatar_url || '',
     description: data.description || '',
     language: data.language || '',
     isPrivate: data.private,
-    stars: data.stargazers_count,
-    defaultBranch: data.default_branch,
+    stars: data.stargazers_count || 0,
+    defaultBranch: data.default_branch || 'main',
     updatedAt: data.updated_at,
     url: data.html_url,
+    isFork: Boolean(data.fork),
+    visibility: data.private ? 'Private' : 'Public',
   };
 }

@@ -1,9 +1,17 @@
 import { Bell, Shield, KeyRound, UserCircle2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { api } from '../services/api';
 import { PageHeader } from './PageHeader';
 
 export function SettingsPage() {
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    api.getMe().then(setProfile).catch(() => setProfile(null));
+  }, []);
+
   return (
     <div>
       <PageHeader
@@ -17,7 +25,7 @@ export function SettingsPage() {
           <CardHeader title="Account" description="GitHub and access settings" />
           <CardBody className="space-y-3">
             <div className="flex items-center justify-between rounded-md border border-border bg-background p-3">
-              <div className="flex items-center gap-2"><UserCircle2 size={15} className="text-accent" /> <span>GitHub connected</span></div>
+              <div className="flex items-center gap-2"><UserCircle2 size={15} className="text-accent" /> <span>{profile ? `GitHub connected: @${profile.username}` : 'GitHub connected'}</span></div>
               <Button variant="secondary" size="sm">Manage</Button>
             </div>
             <div className="flex items-center justify-between rounded-md border border-border bg-background p-3">
