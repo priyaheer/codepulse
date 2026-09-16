@@ -37,6 +37,7 @@ export function githubRedirect(req, res) {
     client_id: config.github.clientId,
     redirect_uri: config.github.callbackUrl,
     scope: config.github.oauthScopes.join(' '),
+    prompt: 'select_account',
     state: `${nonce}.${signOAuthState(nonce)}`,
   });
   res.redirect(`https://github.com/login/oauth/authorize?${params}`);

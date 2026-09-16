@@ -17,7 +17,8 @@ async function request(path, options = {}) {
 
 export const api = {
   getMe: () => request('/auth/me'),
-  logout: async () => {
+  logout: async (user) => {
+    if (user) localStorage.setItem('codepulse_recent_user', JSON.stringify({ username: user.username, name: user.name, avatarUrl: user.avatarUrl, githubProfileUrl: user.githubProfileUrl }));
     try {
       await request('/auth/logout', { method: 'POST' });
     } finally {
@@ -25,7 +26,7 @@ export const api = {
       document.cookie = 'cp_token=; Max-Age=0; path=/; SameSite=Lax';
     }
   },
-  githubLoginUrl: `${API_URL}/auth/github`,
+  githubLoginUrl: `${API_URL}/auth/github?prompt=select_account`,
   listRepos: (page = 1, perPage = 30) => request(`/github/repos?page=${page}&perPage=${perPage}`),
   getRepoTree: (owner, repo, branch) => request(`/github/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/tree?branch=${encodeURIComponent(branch || 'main')}`),
   getRepoFile: (owner, repo, path) => request(`/github/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/file?path=${encodeURIComponent(path)}`),

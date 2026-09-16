@@ -22,8 +22,8 @@ export function SettingsPage() {
   }
 
   async function logout() {
-    await api.logout();
-    navigate('/login', { replace: true });
+    await api.logout(profile);
+    navigate('/', { replace: true });
   }
 
   return (

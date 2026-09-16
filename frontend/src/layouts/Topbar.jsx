@@ -35,10 +35,10 @@ export function Topbar({ user, onMenuClick, onSearchClick }) {
 
   async function handleLogout() {
     try {
-      await api.logout();
+      await api.logout(user);
     } finally {
       setMenuOpen(false);
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
     }
   }
 
