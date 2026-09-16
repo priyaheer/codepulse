@@ -31,13 +31,13 @@ export function ScanPage() {
     }
   }
 
-  const progress = scan?.progress ? Object.entries(scan.progress).filter(([name]) => name !== 'repository').map(([name, status]) => ({ name, status, progress: status === 'done' ? 100 : status === 'running' ? 50 : 0 })) : [];
+  const progress = scan?.progress ? Object.entries(scan.progress).filter(([name]) => name !== 'repository').map(([name, status]) => ({ name, status, progress: status === 'done' ? 100 : null })) : [];
   const scanGroups = progress.length ? progress : [
-    { name: 'codeQuality', progress: 0, status: 'pending' },
-    { name: 'security', progress: 0, status: 'pending' },
-    { name: 'dependencies', progress: 0, status: 'pending' },
-    { name: 'performance', progress: 0, status: 'pending' },
-    { name: 'architecture', progress: 0, status: 'pending' },
+    { name: 'codeQuality', progress: null, status: 'pending' },
+    { name: 'security', progress: null, status: 'pending' },
+    { name: 'dependencies', progress: null, status: 'pending' },
+    { name: 'performance', progress: null, status: 'pending' },
+    { name: 'architecture', progress: null, status: 'pending' },
   ];
 
   return (
@@ -59,14 +59,12 @@ export function ScanPage() {
               <div key={name}>
                 <div className="mb-1 flex items-center justify-between text-[12px] text-text-secondary">
                   <span>{name.replace(/([A-Z])/g, ' $1')}</span>
-                  <span>{percentage}%</span>
+                  <span>{percentage === null ? status : `${percentage}%`}</span>
                 </div>
-                <div className="h-2 rounded-full bg-surface-hover">
-                  <div className="h-2 rounded-full bg-accent" style={{ width: `${percentage}%` }} />
-                </div>
+                {percentage !== null && <div className="h-2 rounded-full bg-surface-hover"><div className="h-2 rounded-full bg-accent" style={{ width: `${percentage}%` }} /></div>}
                 <div className="mt-2 flex items-center justify-between text-[11.5px]">
                   <span className="text-text-secondary">{status}</span>
-                  {status === 'completed' ? <CheckCircle2 size={14} className="text-success" /> : <Clock3 size={14} className="text-warning" />}
+                  {status === 'done' ? <CheckCircle2 size={14} className="text-success" /> : <Clock3 size={14} className="text-warning" />}
                 </div>
               </div>
             ))}
@@ -87,7 +85,7 @@ export function ScanPage() {
               </div>
               <div className="rounded-md border border-border bg-background p-3">
                 <p className="text-[12px] text-text-secondary">Resolved</p>
-                <p className="mt-2 text-[18px] font-semibold text-success">{scan ? '0' : '—'}</p>
+                <p className="mt-2 text-[18px] font-semibold text-success">{scan?.issueCounts?.resolved ?? 'Not available'}</p>
               </div>
             </div>
             <div className="rounded-md border border-border bg-background p-3">

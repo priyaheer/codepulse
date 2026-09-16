@@ -13,6 +13,7 @@ export function IssueDetailPage() {
   const [aiResult, setAiResult] = useState(null);
   const [loading, setLoading] = useState('');
   const [error, setError] = useState('');
+  const [lastAction, setLastAction] = useState('');
   const liveIssue = /^[a-f\d]{24}$/i.test(issueId || '');
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function IssueDetailPage() {
       return;
     }
     setLoading(action);
+    setLastAction(action);
     setError('');
     try {
       const result = action === 'analyze' ? await api.analyzeIssue(issueId) : await api.suggestIssueFix(issueId);
@@ -69,7 +71,7 @@ export function IssueDetailPage() {
         }
       />
 
-      {error && <div className="mb-6 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
+      {error && <div className="mb-6 flex items-center justify-between gap-3 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12px] text-danger"><span>{error}</span>{lastAction && <Button variant="ghost" size="sm" onClick={() => runAI(lastAction)}>Retry</Button>}</div>}
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
@@ -111,7 +113,7 @@ export function IssueDetailPage() {
             <Button variant="primary" size="sm" icon={<Sparkles size={13} />} onClick={() => runAI('analyze')} disabled={loading !== ''}>{loading === 'analyze' ? 'Analyzing...' : 'Analyze with AI'}</Button>
             <div className="rounded-md border border-border bg-background p-3">
               <p className="text-[11.5px] text-text-secondary">Summary</p>
-              <p className="mt-2 text-[13px] leading-relaxed text-text-primary">{aiResult?.summary || (liveIssue ? 'Run analysis to generate an evidence-based explanation.' : 'Demo Mode preview. Connect a repository to generate a real analysis.')}</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-text-primary">{aiResult?.summary || (liveIssue ? 'Run analysis to generate an evidence-based explanation.' : 'No repository-backed issue is available.')}</p>
             </div>
             {aiResult && <>
               <div className="grid gap-3 sm:grid-cols-2">

@@ -1,5 +1,5 @@
 import { Menu, Search, Bell, ChevronDown, LogOut, UserCircle2, Settings, ExternalLink } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { api } from '../services/api';
@@ -7,7 +7,31 @@ import { api } from '../services/api';
 export function Topbar({ user, onMenuClick, onSearchClick }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState('');
   const initials = user?.name ? user.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase() : 'CP';
+
+  useEffect(() => {
+    let active = true;
+    api.listProjects().then((items) => {
+      if (!active) return;
+      const stored = localStorage.getItem('codepulse_active_project');
+      const selected = items.find((item) => item._id === stored) || items[0];
+      setProjects(items);
+      setSelectedProject(selected?._id || '');
+      if (selected) localStorage.setItem('codepulse_active_project', selected._id);
+      else localStorage.removeItem('codepulse_active_project');
+    }).catch(() => { if (active) { setProjects([]); setSelectedProject(''); } });
+    return () => { active = false; };
+  }, [user?.id]);
+
+  function handleProjectChange(event) {
+    const projectId = event.target.value;
+    setSelectedProject(projectId);
+    if (projectId) localStorage.setItem('codepulse_active_project', projectId);
+    else localStorage.removeItem('codepulse_active_project');
+    navigate('/app/dashboard');
+  }
 
   async function handleLogout() {
     try {
@@ -29,14 +53,14 @@ export function Topbar({ user, onMenuClick, onSearchClick }) {
           <Menu size={17} />
         </button>
 
-        <button
-          type="button"
-          className="hidden sm:flex items-center gap-2 rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-[13px] text-text-primary hover:bg-surface-hover transition-colors max-w-[260px]"
-        >
+        <label className="hidden sm:flex items-center gap-2 rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-[13px] text-text-primary hover:bg-surface-hover transition-colors max-w-[280px]">
           <span className="h-1.5 w-1.5 rounded-full bg-success shrink-0" />
-          <span className="truncate mono">{user?.username ? `${user.username}/workspace` : 'Connected GitHub account'}</span>
+          <select aria-label="Select project" value={selectedProject} onChange={handleProjectChange} className="max-w-[220px] truncate bg-transparent outline-none mono">
+            {!projects.length && <option value="">No connected project</option>}
+            {projects.map((project) => <option key={project._id} value={project._id}>{project.owner}/{project.name}</option>)}
+          </select>
           <ChevronDown size={14} className="text-text-muted shrink-0" />
-        </button>
+        </label>
       </div>
 
       <div className="flex items-center gap-2">

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AppLayout } from './layouts/AppLayout';
@@ -7,26 +8,27 @@ import { LoginPage } from './pages/LoginPage';
 import { DemoPage } from './pages/DemoPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 
-import { DashboardPage } from './pages/DashboardPage';
-import { ProjectsPage } from './pages/ProjectsPage';
-import { ProjectOverviewPage } from './pages/ProjectOverviewPage';
-import { ScanPage } from './pages/ScanPage';
-import { IssuesPage } from './pages/IssuesPage';
-import { IssueDetailPage } from './pages/IssueDetailPage';
-import { CodeExplorerPage } from './pages/CodeExplorerPage';
-import { SecurityPage } from './pages/SecurityPage';
-import { DependenciesPage } from './pages/DependenciesPage';
-import { PerformancePage } from './pages/PerformancePage';
-import { ArchitecturePage } from './pages/ArchitecturePage';
-import { AIAssistantPage } from './pages/AIAssistantPage';
-import { ScanHistoryPage } from './pages/ScanHistoryPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { ProfilePage } from './pages/ProfilePage';
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then((module) => ({ default: module.DashboardPage })));
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then((module) => ({ default: module.ProjectsPage })));
+const ProjectOverviewPage = lazy(() => import('./pages/ProjectOverviewPage').then((module) => ({ default: module.ProjectOverviewPage })));
+const ScanPage = lazy(() => import('./pages/ScanPage').then((module) => ({ default: module.ScanPage })));
+const IssuesPage = lazy(() => import('./pages/IssuesPage').then((module) => ({ default: module.IssuesPage })));
+const IssueDetailPage = lazy(() => import('./pages/IssueDetailPage').then((module) => ({ default: module.IssueDetailPage })));
+const CodeExplorerPage = lazy(() => import('./pages/CodeExplorerPage').then((module) => ({ default: module.CodeExplorerPage })));
+const SecurityPage = lazy(() => import('./pages/SecurityPage').then((module) => ({ default: module.SecurityPage })));
+const DependenciesPage = lazy(() => import('./pages/DependenciesPage').then((module) => ({ default: module.DependenciesPage })));
+const PerformancePage = lazy(() => import('./pages/PerformancePage').then((module) => ({ default: module.PerformancePage })));
+const ArchitecturePage = lazy(() => import('./pages/ArchitecturePage').then((module) => ({ default: module.ArchitecturePage })));
+const AIAssistantPage = lazy(() => import('./pages/AIAssistantPage').then((module) => ({ default: module.AIAssistantPage })));
+const ScanHistoryPage = lazy(() => import('./pages/ScanHistoryPage').then((module) => ({ default: module.ScanHistoryPage })));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then((module) => ({ default: module.AnalyticsPage })));
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then((module) => ({ default: module.ProfilePage })));
 
 export default function App() {
   return (
     <ThemeProvider>
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-background text-[13px] text-text-secondary">Loading CodePulse...</div>}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -52,6 +54,7 @@ export default function App() {
           <Route path="profile" element={<ProfilePage />} />
         </Route>
       </Routes>
+      </Suspense>
     </ThemeProvider>
   );
 }

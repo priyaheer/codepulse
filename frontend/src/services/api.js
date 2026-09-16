@@ -36,6 +36,7 @@ export const api = {
   listScans: (id) => request(`/projects/${id}/scans`),
   getScan: (projectId, scanId) => request(`/projects/${projectId}/scans/${scanId}`),
   getAnalytics: (projectId) => request(`/analytics/projects/${projectId}/analytics`),
+  compareScans: (projectId, from, to) => request(`/analytics/projects/${projectId}/compare?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
   listIssues: (projectId) => request(`/projects/${projectId}/issues`),
   getIssue: (id) => request(`/issues/${id}`),
   updateIssueStatus: (id, status) => request(`/issues/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),

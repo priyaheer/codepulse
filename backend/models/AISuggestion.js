@@ -13,6 +13,8 @@ const aiSuggestionSchema = new mongoose.Schema(
     recommendedSolution: { type: String, default: '' },
     saferAlternative: { type: String, default: '' },
     suggestedCode: { type: String, default: '' },
+    evidence: { type: [String], default: [] },
+    relatedFiles: { type: [String], default: [] },
     diff: { type: String, default: '' },
     riskLevel: { type: String, enum: ['low', 'medium', 'high'], default: 'low' },
     confidence: { type: Number, min: 0, max: 1, default: 0.7 },

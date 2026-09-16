@@ -57,3 +57,40 @@ export async function getProjectAnalytics(req, res, next) {
     next(err);
   }
 }
+
+function issueKey(issue) {
+  return issue.fingerprint || [issue.category, issue.rule, issue.file, issue.line || '', String(issue.evidence || '').trim()].join('|').toLowerCase();
+}
+
+export async function compareProjectScans(req, res, next) {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id) || !mongoose.isValidObjectId(req.query.from) || !mongoose.isValidObjectId(req.query.to)) throw new AppError('Two completed scans are required', 400);
+    const project = await Project.findOne({ _id: req.params.id, userId: req.user._id }).lean();
+    if (!project) throw new AppError('Project not found', 404);
+    const scans = await Scan.find({ _id: { $in: [req.query.from, req.query.to] }, projectId: project._id, status: 'completed' }).lean();
+    if (scans.length !== 2) throw new AppError('Two completed scans are required', 400);
+    const scanA = scans.find((scan) => scan._id.toString() === req.query.from);
+    const scanB = scans.find((scan) => scan._id.toString() === req.query.to);
+    const [issuesA, issuesB] = await Promise.all([Issue.find({ projectId: project._id, scanId: scanA._id }).lean(), Issue.find({ projectId: project._id, scanId: scanB._id }).lean()]);
+    const mapA = new Map(issuesA.map((issue) => [issueKey(issue), issue]));
+    const mapB = new Map(issuesB.map((issue) => [issueKey(issue), issue]));
+    const resolved = issuesA.filter((issue) => !mapB.has(issueKey(issue)));
+    const added = issuesB.filter((issue) => !mapA.has(issueKey(issue)));
+    const persistent = issuesB.filter((issue) => mapA.has(issueKey(issue)));
+    const metric = (key) => ({ from: scanA.issueCounts?.[key] ?? 0, to: scanB.issueCounts?.[key] ?? 0, change: (scanB.issueCounts?.[key] ?? 0) - (scanA.issueCounts?.[key] ?? 0) });
+    res.json({ data: {
+      project: { id: project._id, repository: project.fullName || `${project.owner}/${project.name}` },
+      from: { id: scanA._id, createdAt: scanA.createdAt, commitSha: scanA.commitSha, healthScore: scanA.healthScore, scores: scanA.scores, issueCounts: scanA.issueCounts },
+      to: { id: scanB._id, createdAt: scanB.createdAt, commitSha: scanB.commitSha, healthScore: scanB.healthScore, scores: scanB.scores, issueCounts: scanB.issueCounts },
+      health: { from: scanA.healthScore, to: scanB.healthScore, change: scanB.healthScore - scanA.healthScore },
+      metrics: { total: metric('total'), critical: metric('critical'), high: metric('high'), medium: metric('medium'), low: metric('low') },
+      categories: Object.fromEntries(['security', 'dependency', 'performance', 'architecture', 'code-quality'].map((category) => {
+        const count = (items) => items.filter((issue) => issue.category === category).length;
+        return [category, { from: count(issuesA), to: count(issuesB), change: count(issuesB) - count(issuesA) }];
+      })),
+      issues: { resolved, new: added, persistent },
+    } });
+  } catch (err) {
+    next(err);
+  }
+}

@@ -17,6 +17,7 @@ export function AIAssistantPage() {
   const [answer, setAnswer] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [lastQuestion, setLastQuestion] = useState('');
 
   async function ask(value = question) {
     const projectId = localStorage.getItem('codepulse_active_project');
@@ -26,6 +27,7 @@ export function AIAssistantPage() {
     }
     if (!value.trim()) return;
     setQuestion(value);
+    setLastQuestion(value);
     setLoading(true);
     setError('');
     try {
@@ -61,7 +63,7 @@ export function AIAssistantPage() {
         <Card>
           <CardHeader title="Conversation" description="Repository-grounded answers" />
           <CardBody className="space-y-4">
-            {error && <div className="rounded-md border border-danger/40 bg-danger/10 p-3 text-[12px] text-danger">{error}</div>}
+            {error && <div className="flex items-center justify-between gap-3 rounded-md border border-danger/40 bg-danger/10 p-3 text-[12px] text-danger"><span>{error}</span>{lastQuestion && <Button variant="ghost" size="sm" onClick={() => ask(lastQuestion)}>Retry</Button>}</div>}
             <div className="rounded-md border border-border bg-background p-3 text-[13px] text-text-primary">
               <div className="mb-2 flex items-center gap-2 text-accent"><Sparkles size={14} /> AI</div>
               <p>{answer?.answer || 'Ask a question to receive an answer grounded in selected repository files.'}</p>
