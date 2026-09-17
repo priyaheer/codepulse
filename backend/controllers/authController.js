@@ -118,11 +118,11 @@ export async function githubCallback(req, res, next) {
     const token = generateToken(user._id);
     res
       .cookie('cp_token', token, {
-        httpOnly: true,
-        secure: !config.isDev,
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      })
+  httpOnly: true,
+  secure: !config.isDev,
+  sameSite: config.isDev ? 'lax' : 'none',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+})
       .redirect(`${config.clientUrl}/app/dashboard`);
   } catch (err) {
     next(err);
@@ -140,5 +140,10 @@ export async function getMe(req, res) {
  * POST /api/auth/logout
  */
 export function logout(req, res) {
-  res.clearCookie('cp_token', { path: '/', httpOnly: true, sameSite: 'lax', secure: !config.isDev }).json({ success: true, message: 'Logged out' });
+  res.clearCookie('cp_token', {
+  path: '/',
+  httpOnly: true,
+  sameSite: config.isDev ? 'lax' : 'none',
+  secure: !config.isDev
+}).json({ success: true, message: 'Logged out' });
 }
