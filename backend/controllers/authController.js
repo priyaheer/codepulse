@@ -7,8 +7,21 @@ import { AppError } from '../middleware/errorHandler.js';
 import crypto from 'node:crypto';
 import { encryptToken } from '../services/tokenCrypto.js';
 
+const oauthExchangeCodes = new Map();
+const OAUTH_EXCHANGE_TTL_MS = 60 * 1000;
+
 function signOAuthState(value) {
   return crypto.createHmac('sha256', config.github.oauthStateSecret).update(value).digest('base64url');
+}
+
+function createOAuthExchangeCode(userId, token) {
+  const code = crypto.randomBytes(32).toString('base64url');
+  oauthExchangeCodes.set(code, {
+    userId: userId.toString(),
+    token,
+    expiresAt: Date.now() + OAUTH_EXCHANGE_TTL_MS,
+  });
+  return code;
 }
 
 export function serializeUserProfile(user) {
@@ -114,8 +127,9 @@ export async function githubCallback(req, res, next) {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // Issue JWT and redirect to frontend
+    // Issue JWT and redirect to frontend through a short-lived, one-time exchange code
     const token = generateToken(user._id);
+    const exchangeCode = createOAuthExchangeCode(user._id, token);
     res
       .cookie('cp_token', token, {
   httpOnly: true,
@@ -123,7 +137,27 @@ export async function githubCallback(req, res, next) {
   sameSite: config.isDev ? 'lax' : 'none',
   maxAge: 7 * 24 * 60 * 60 * 1000,
 })
-      .redirect(`${config.clientUrl}/app/dashboard`);
+      .redirect(`${config.clientUrl}/auth/callback?code=${encodeURIComponent(exchangeCode)}`);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/auth/exchange — exchange a one-time OAuth code for a CodePulse JWT
+ */
+export function exchangeOAuthCode(req, res, next) {
+  try {
+    const { code } = req.body || {};
+    if (typeof code !== 'string' || !code) throw new AppError('Invalid or missing OAuth exchange code', 400);
+
+    const exchange = oauthExchangeCodes.get(code);
+    if (!exchange) throw new AppError('Invalid or expired OAuth exchange code', 400);
+
+    oauthExchangeCodes.delete(code);
+    if (exchange.expiresAt <= Date.now()) throw new AppError('Invalid or expired OAuth exchange code', 400);
+
+    res.json({ data: { token: exchange.token } });
   } catch (err) {
     next(err);
   }

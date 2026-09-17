@@ -17,6 +17,7 @@ async function request(path, options = {}) {
 
 export const api = {
   getMe: () => request('/auth/me'),
+  exchangeOAuthCode: (code) => request('/auth/exchange', { method: 'POST', body: JSON.stringify({ code }) }),
   logout: async (user) => {
     if (user) localStorage.setItem('codepulse_recent_user', JSON.stringify({ username: user.username, name: user.name, avatarUrl: user.avatarUrl, githubProfileUrl: user.githubProfileUrl }));
     try {

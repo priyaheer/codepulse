@@ -7,6 +7,7 @@ import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { DemoPage } from './pages/DemoPage';
 import { OnboardingPage } from './pages/OnboardingPage';
+import { OAuthCallbackPage } from './pages/OAuthCallbackPage';
 
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then((module) => ({ default: module.DashboardPage })));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then((module) => ({ default: module.ProjectsPage })));
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/demo" element={<DemoPage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
         <Route path="/app" element={<AppLayout />}>
           <Route path="dashboard" element={<DashboardPage />} />
