@@ -40,7 +40,7 @@ export const config = {
     openaiApiKey: process.env.OPENAI_API_KEY || '',
   },
 
-  clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+  clientUrl: process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173',
 
   scanner: {
     maxFileSizeBytes: 500_000,      // 500 KB per file
